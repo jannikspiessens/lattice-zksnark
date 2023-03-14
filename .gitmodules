@@ -1,4 +1,3 @@
 [submodule "depends/libsnark"]
 	path = depends/libsnark
-	url = https://github.com/lattice-based-zkSNARKs/libsnark
-	branch = master
+	url = https://github.com/jannikspiessens/libsnark.git
