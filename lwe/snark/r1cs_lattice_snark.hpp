@@ -220,7 +220,7 @@ namespace libsnark {
 
         libff::Fr_vector<ppT> pi;
         prepare_pi_proof<ppT>(qap_wit, pi);
-        assert(pi.size() == crs.enc_qs->size());
+        assert(pi.size() == crs.enc_qs.size());
 
         temp_prg = new LWERandomness::PseudoRandomGenerator(crs.crs_aes_key);
         temp_dg = new LWERandomness::DiscreteGaussian(Params::width,
