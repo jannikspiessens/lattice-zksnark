@@ -115,7 +115,8 @@ namespace libsnark {
 
         const uint64_t ABC_rows = A_qs.begin()->size() - num_inputs - 1;
         const uint64_t H_rows = H_qs.begin()->size();
-        const uint64_t rows = ABC_rows + 3 + H_rows;
+        //const uint64_t rows = ABC_rows + 3 + H_rows;
+        const uint64_t rows = ABC_rows + H_rows;
         q_mat.resize(rows);
         for (uint64_t i = 0; i < ABC_rows; i++) {
             for (uint64_t j = 0; j < Params::query_num; j++) {
@@ -124,12 +125,13 @@ namespace libsnark {
                 q_mat[i][j * LWE::query_size + 2] = C_qs[j][i + 1 + num_inputs];
             }
         }
-        for (uint64_t i = 0; i < 3; i++)
+        /*for (uint64_t i = 0; i < 3; i++)
             for (uint64_t j = 0; j < Params::query_num; j++)
-                q_mat[ABC_rows + i][i + LWE::query_size * j] = Z_s[j];
+                q_mat[ABC_rows + i][i + LWE::query_size * j] = Z_s[j];*/
         for (uint64_t i = 0; i < Params::query_num; i++)
             for (uint64_t j = 0; j < H_rows; j++)
-                q_mat[ABC_rows + 3 + j][i * LWE::query_size + 3] = H_qs[i][j];
+                q_mat[ABC_rows + j][i * LWE::query_size + 3] = H_qs[i][j];
+                //q_mat[ABC_rows + 3 + j][i * LWE::query_size + 3] = H_qs[i][j];
         libff::leave_block("Generating QAP queries");
     }
 
@@ -147,8 +149,7 @@ namespace libsnark {
         libff::Fr_vector<ppT> Zs;
         std::vector<libff::Fr_vector<ppT>> A_prefix, B_prefix, C_prefix;
         r1cs_lattice_snark_query_matrix<ppT, Params::pt_dim> q_mat;
-        gen_q_mat<ppT, Params>(cs, q_mat, A_qs, B_qs, C_qs, A_prefix, B_prefix,
-                               C_prefix, H_qs, Zs);
+        gen_q_mat<ppT, Params>(cs, q_mat, A_qs, B_qs, C_qs, A_prefix, B_prefix, C_prefix, H_qs, Zs);
 
         libff::enter_block("Generating CRS and VK");
         LWERandomness::AES_KEY _crs_aes_key;
@@ -174,17 +175,19 @@ namespace libsnark {
         size_t num_ABC_coeffs =
             qap_wit.coefficients_for_ABCs.size() - num_inputs;
         size_t proof_dim =
-            num_ABC_coeffs + 3 + qap_wit.coefficients_for_H.size();
+            num_ABC_coeffs + qap_wit.coefficients_for_H.size();
+            //num_ABC_coeffs + 3 + qap_wit.coefficients_for_H.size();
         pi.resize(proof_dim);
 
         for (size_t i = 0; i < num_ABC_coeffs; i++)
             pi[i] = qap_wit.coefficients_for_ABCs[i + num_inputs];
-        pi[num_ABC_coeffs] = qap_wit.d1;
-        pi[num_ABC_coeffs + 1] = qap_wit.d2;
-        pi[num_ABC_coeffs + 2] = qap_wit.d3;
+        //pi[num_ABC_coeffs] = qap_wit.d1;
+        //pi[num_ABC_coeffs + 1] = qap_wit.d2;
+        //pi[num_ABC_coeffs + 2] = qap_wit.d3;
         std::copy(std::begin(qap_wit.coefficients_for_H),
                   std::end(qap_wit.coefficients_for_H),
-                  std::begin(pi) + num_ABC_coeffs + 3);
+                  std::begin(pi) + num_ABC_coeffs);
+                  //std::begin(pi) + num_ABC_coeffs + 3);
         libff::leave_block("Prepare pi proof");
     }
 
@@ -196,7 +199,8 @@ namespace libsnark {
         libff::enter_block("Call to r1cs lattice snark prover");
 
         libff::enter_block("Compute H polynomial");
-
+        
+        /*
         LWERandomness::AES_KEY _aes_key;
         genAES_key(&_aes_key);
 
@@ -213,6 +217,11 @@ namespace libsnark {
         public_params_init<ppT, cpT>(original_prg, original_dg);
         delete temp_dg;
         delete temp_prg;
+        */
+
+        const libff::Fr<ppT> d1 = libff::Fr<ppT>::zero(),
+                             d2 = libff::Fr<ppT>::zero(),
+                             d3 = libff::Fr<ppT>::zero();
 
         const qap_witness<libff::Fr<ppT>> qap_wit = r1cs_to_qap_witness_map(
             crs.constraint_system, primary_input, auxiliary_input, d1, d2, d3);
@@ -222,11 +231,11 @@ namespace libsnark {
         prepare_pi_proof<ppT>(qap_wit, pi);
         assert(pi.size() == crs.enc_qs.size());
 
-        temp_prg = new LWERandomness::PseudoRandomGenerator(crs.crs_aes_key);
-        temp_dg = new LWERandomness::DiscreteGaussian(Params::width,
+        auto *temp_prg = new LWERandomness::PseudoRandomGenerator(crs.crs_aes_key);
+        auto *temp_dg = new LWERandomness::DiscreteGaussian(Params::width,
                                                       LWE::expand, *temp_prg);
-        original_prg = ppT::prg;
-        original_dg = ppT::dg;
+        auto *original_prg = ppT::prg;
+        auto *original_dg = ppT::dg;
         public_params_init<ppT, cpT>(temp_prg, temp_dg);
 
         libff::enter_block("Generating response");
@@ -266,9 +275,9 @@ namespace libsnark {
         delete temp_dg;
         delete temp_prg;
 
-#ifndef NOT_PROVABLE_ZK
-        LWE::re_randomize(crs.public_parameter, added);
-#endif
+//#ifndef NOT_PROVABLE_ZK
+        //LWE::re_randomize(crs.public_parameter, added);
+//#endif
         added.rescale();
         libff::leave_block("Generating response");
 
