@@ -102,13 +102,13 @@ namespace libsnark {
             C_qs[i] = std::move(qap_inst.Ct);
             H_qs[i] = std::move(qap_inst.Ht);
             Z_s[i] = qap_inst.Zt;
-            A_prefix[i].reserve(num_inputs + 1);
+            A_prefix[i].resize(num_inputs + 1);
             std::copy_n(std::begin(A_qs[i]), num_inputs + 1,
                         std::begin(A_prefix[i]));
-            B_prefix[i].reserve(num_inputs + 1);
+            B_prefix[i].resize(num_inputs + 1);
             std::copy_n(std::begin(B_qs[i]), num_inputs + 1,
                         std::begin(B_prefix[i]));
-            C_prefix[i].reserve(num_inputs + 1);
+            C_prefix[i].resize(num_inputs + 1);
             std::copy_n(std::begin(C_qs[i]), num_inputs + 1,
                         std::begin(C_prefix[i]));
         }
